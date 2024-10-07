@@ -28,6 +28,11 @@ const converter = ortbConverter({
   context: {
       netRevenue: true,
       ttl: 30
+  },
+  imp(buildImp, bidRequest, context) {
+    const imp = buildImp(bidRequest, context);
+    deepSetValue(imp, 'ext.params', bidRequest.params);
+    return imp;
   }
 });
 
