@@ -6,6 +6,7 @@ import { convertOrtbRequestToProprietaryNative } from '../src/native.js';
 import {Renderer} from '../src/Renderer.js';
 import { getRefererInfo } from '../src/refererDetection.js';
 import {ortbConverter} from '../libraries/ortbConverter/converter.js'
+import {pbsExtensions} from '../../libraries/pbsExtensions/pbsExtensions.js'
 
 /**
  * @typedef {import('../src/adapters/bidderFactory.js').BidRequest} BidRequest
@@ -25,15 +26,16 @@ const BIDDER_ENDPOINT_WINNING = 'winning';
 const OUTSTREAM_RENDERER_URL = 'https://acdn.adnxs.com/video/outstream/ANOutstreamVideo.js';
 
 const converter = ortbConverter({     
+  processors: pbsExtensions,
   context: {
       netRevenue: true,
       ttl: 30
   },
-  imp(buildImp, bidRequest, context) {
+  /*imp(buildImp, bidRequest, context) {
     const imp = buildImp(bidRequest, context);
     deepSetValue(imp, 'ext.params', bidRequest.params);
     return imp;
-  }
+  }*/
 });
 
 export const spec = {
