@@ -5,7 +5,7 @@ import {BANNER, NATIVE, VIDEO} from '../src/mediaTypes.js';
 import { convertOrtbRequestToProprietaryNative } from '../src/native.js';
 import {Renderer} from '../src/Renderer.js';
 import { getRefererInfo } from '../src/refererDetection.js';
-import {ortbConverter} from '../../libraries/ortbConverter/converter.js'
+import {ortbConverter} from '../libraries/ortbConverter/converter.js'
 
 /**
  * @typedef {import('../src/adapters/bidderFactory.js').BidRequest} BidRequest
