@@ -5,6 +5,7 @@ import {BANNER, NATIVE, VIDEO} from '../src/mediaTypes.js';
 import { convertOrtbRequestToProprietaryNative } from '../src/native.js';
 import {Renderer} from '../src/Renderer.js';
 import { getRefererInfo } from '../src/refererDetection.js';
+import {ortbConverter} from '../../libraries/ortbConverter/converter.js'
 
 /**
  * @typedef {import('../src/adapters/bidderFactory.js').BidRequest} BidRequest
@@ -22,6 +23,13 @@ const BIDDER_ENDPOINT_AUCTION = 'msq_prebid';
 const BIDDER_ENDPOINT_WINNING = 'winning';
 
 const OUTSTREAM_RENDERER_URL = 'https://acdn.adnxs.com/video/outstream/ANOutstreamVideo.js';
+
+const converter = ortbConverter({     
+  context: {
+      netRevenue: true,
+      ttl: 30
+  }
+});
 
 export const spec = {
   code: BIDDER_CODE,
@@ -81,7 +89,8 @@ export const spec = {
       codes: codes,
       // TODO: is 'page' the right value here?
       referer: encodeURIComponent(bidderRequest.refererInfo.page || bidderRequest.refererInfo.topmostLocation),
-      pbjs: '$prebid.version$'
+      pbjs: '$prebid.version$',
+      ortb: converter.toORTB({validBidRequests, bidderRequest})
     };
     if (bidderRequest) { // modules informations (gdpr, ccpa, schain, userId)
       if (bidderRequest.gdprConsent) {
