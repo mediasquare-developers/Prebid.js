@@ -6,7 +6,7 @@ import { convertOrtbRequestToProprietaryNative } from '../src/native.js';
 import {Renderer} from '../src/Renderer.js';
 import { getRefererInfo } from '../src/refererDetection.js';
 import {ortbConverter} from '../libraries/ortbConverter/converter.js'
-import {pbsExtensions} from '../../libraries/pbsExtensions/pbsExtensions.js'
+import {pbsExtensions} from '../libraries/pbsExtensions/pbsExtensions.js'
 
 /**
  * @typedef {import('../src/adapters/bidderFactory.js').BidRequest} BidRequest
