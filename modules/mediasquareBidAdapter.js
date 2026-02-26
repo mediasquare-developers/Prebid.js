@@ -221,6 +221,14 @@ export const spec = {
     });
     ajax(endpoint + BIDDER_ENDPOINT_WINNING, null, JSON.stringify(params), {method: 'POST', withCredentials: true});
     return true;
+  },
+
+  /**
+  * Register bidder specific code, which will execute if bidder timed out after an auction
+  * @param {Object} data Containing timeout specific data
+  */
+  onTimeout: function(data) {
+    ajax(endpoint + 'timeout', null, JSON.stringify(data), {method: 'POST', widthCredentials: true});
   }
 
 }
