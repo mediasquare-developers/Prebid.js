@@ -3,10 +3,12 @@ import { spec } from 'modules/mediasquareBidAdapter.js';
 import { server } from 'test/mocks/xhr.js';
 
 describe('MediaSquare bid adapter tests', function () {
-  var DEFAULT_PARAMS = [{
+  const BIDDER_CODE = 'mediasquare';
+  const DEFAULT_PARAMS = [{
     adUnitCode: 'banner-div',
     bidId: 'aaaa1234',
     auctionId: 'bbbb1234',
+    transactionId: 'cccc1234',
     ortb2Imp: {
       ext: {
         tid: 'cccc1234',
@@ -19,102 +21,12 @@ describe('MediaSquare bid adapter tests', function () {
         ]
       }
     },
-    bidder: 'mediasquare',
+    bidder: BIDDER_CODE,
     params: {
       owner: 'test',
       code: 'publishername_atf_desktop_rg_pave'
     },
   }];
-  var VIDEO_PARAMS = [{
-    adUnitCode: 'banner-div',
-    bidId: 'aaaa1234',
-    auctionId: 'bbbb1234',
-    transactionId: 'cccc1234',
-    mediaTypes: {
-      video: {
-        context: 'instream',
-        playerSize: [640, 480],
-        mimes: ['video/mp4'],
-      }
-    },
-    bidder: 'mediasquare',
-    params: {
-      owner: 'test',
-      code: 'publishername_atf_desktop_rg_pave'
-    },
-  }];
-  var NATIVE_PARAMS = [{
-    adUnitCode: 'banner-div',
-    bidId: 'aaaa1234',
-    auctionId: 'bbbb1234',
-    transactionId: 'cccc1234',
-    mediaTypes: {
-      native: {
-        title: {
-          required: true,
-          len: 80
-        },
-      }
-    },
-    bidder: 'mediasquare',
-    params: {
-      owner: 'test',
-      code: 'publishername_atf_desktop_rg_pave'
-    },
-  }];
-  var FLOORS_PARAMS = [{
-    adUnitCode: 'banner-div',
-    bidId: 'aaaa1234',
-    auctionId: 'bbbb1234',
-    transactionId: 'cccc1234',
-    mediaTypes: {
-      banner: {
-        sizes: [
-          [300, 250]
-        ]
-      }
-    },
-    bidder: 'mediasquare',
-    params: {
-      owner: 'test',
-      code: 'publishername_atf_desktop_rg_pave'
-    },
-    sizes: [[300, 250]],
-    getFloor: function (a) { return { currency: 'USD', floor: 1.0 }; },
-  }];
-  var BID_RESPONSE = {
-    'body': {
-      'responses': [{
-        'transaction_id': 'cccc1234',
-        'cpm': 22.256608,
-        'width': 300,
-        'height': 250,
-        'creative_id': '158534630',
-        'currency': 'USD',
-        'originalCpm': 25.0123,
-        'originalCurrency': 'USD',
-        'net_revenue': true,
-        'ttl': 300,
-        'ad': '< --- creative code --- >',
-        'bidder': 'msqClassic',
-        'code': 'test/publishername_atf_desktop_rg_pave',
-        'bid_id': 'aaaa1234',
-        'adomain': ['test.com'],
-        'context': 'instream',
-        'increment': 1.0,
-        'ova': 'cleared',
-        'dsa': {
-          'behalf': 'some-behalf',
-          'paid': 'some-paid',
-          'transparency': [{
-            'domain': 'test.com',
-            'dsaparams': [1, 2, 3]
-          }],
-          'adrender': 1
-        }
-      }],
-    }
-  };
 
   const DEFAULT_OPTIONS = {
     ortb2: {
@@ -133,10 +45,10 @@ describe('MediaSquare bid adapter tests', function () {
       }
     },
     userIdAsEids: [{
-      "source": "superid.com",
-      "uids": [{
-        "id": "12345678",
-        "atype": 1
+      source: 'superid.com',
+      uids: [{
+        id: '12345678',
+        atype: 1
       }]
     }],
     gdprConsent: {
@@ -145,178 +57,158 @@ describe('MediaSquare bid adapter tests', function () {
       vendorData: {}
     },
     refererInfo: {
+      page: 'https://www.prebid.org/the/link/to/the/page',
       referer: 'https://www.prebid.org',
       canonicalUrl: 'https://www.prebid.org/the/link/to/the/page'
     },
-    uspConsent: '111222333',
-    userId: { 'id5id': { uid: '1111' } },
-    schain: {
-      'ver': '1.0',
-      'complete': 1,
-      'nodes': [{
-        'asi': 'exchange1.com',
-        'sid': '1234',
-        'hp': 1,
-        'rid': 'bid-request-1',
-        'name': 'publisher',
-        'domain': 'publisher.com'
-      }]
-    },
+    uspConsent: '111222333'
   };
-  it('Verify build request', function () {
-    const request = spec.buildRequests(DEFAULT_PARAMS, DEFAULT_OPTIONS);
-    expect(request).to.have.property('url').and.to.equal('https://pbs-front.mediasquare.fr/msq_prebid');
-    expect(request).to.have.property('method').and.to.equal('POST');
-    const requestContent = JSON.parse(request.data);
-    expect(requestContent.codes[0]).to.have.property('owner').and.to.equal('test');
-    expect(requestContent.codes[0]).to.have.property('code').and.to.equal('publishername_atf_desktop_rg_pave');
-    expect(requestContent.codes[0]).to.have.property('adunit').and.to.equal('banner-div');
-    expect(requestContent.codes[0]).to.have.property('bidId').and.to.equal('aaaa1234');
-    expect(requestContent.codes[0]).not.to.have.property('auctionId');
-    expect(requestContent.codes[0]).not.to.have.property('transactionId');
-    expect(requestContent.codes[0]).to.have.property('mediatypes').exist;
-    expect(requestContent.codes[0]).to.have.property('floor').exist;
-    expect(requestContent.codes[0]).to.have.property('ortb2Imp').exist;
-    expect(requestContent).to.have.property('ortb2').exist;
-    expect(requestContent.eids).exist;
-    expect(requestContent.eids).to.have.lengthOf(1);
-    expect(requestContent.codes[0].floor).to.deep.equal({});
-    expect(requestContent).to.have.property('dsa');
-    const requestfloor = spec.buildRequests(FLOORS_PARAMS, DEFAULT_OPTIONS);
-    const responsefloor = JSON.parse(requestfloor.data);
-    expect(responsefloor.codes[0]).to.have.property('floor').exist;
-    expect(responsefloor.codes[0].floor).to.have.property('300x250').and.to.have.property('floor').and.to.equal(1);
-    expect(responsefloor.codes[0].floor).to.have.property('*');
+
+  it('Verifies bidder code and aliases', function () {
+    expect(spec.code).to.equal(BIDDER_CODE);
+    expect(spec.aliases).to.deep.equal(['msq']);
   });
 
-  it('Verify parse response', function () {
-    const request = spec.buildRequests(DEFAULT_PARAMS, DEFAULT_OPTIONS);
-    const response = spec.interpretResponse(BID_RESPONSE, request);
-    expect(response).to.have.lengthOf(1);
-    const bid = response[0];
-    expect(bid.cpm).to.equal(22.256608);
-    expect(bid.ad).to.equal('< --- creative code --- >');
-    expect(bid.width).to.equal(300);
-    expect(bid.height).to.equal(250);
-    expect(bid.creativeId).to.equal('158534630');
-    expect(bid.currency).to.equal('USD');
-    expect(bid.netRevenue).to.equal(true);
-    expect(bid.ttl).to.equal(300);
-    expect(bid.requestId).to.equal('aaaa1234');
-    expect(bid.mediasquare).to.exist;
-    expect(bid.mediasquare.bidder).to.exist;
-    expect(bid.mediasquare.bidder).to.equal('msqClassic');
-    expect(bid.mediasquare.context).to.exist;
-    expect(bid.mediasquare.context).to.equal('instream');
-    expect(bid.mediasquare.increment).to.exist;
-    expect(bid.mediasquare.increment).to.equal(1.0);
-    expect(bid.mediasquare.code).to.equal([DEFAULT_PARAMS[0].params.owner, DEFAULT_PARAMS[0].params.code].join('/'));
-    expect(bid.mediasquare.ova).to.exist.and.to.equal('cleared');
-    expect(bid.meta).to.exist;
-    expect(bid.meta.advertiserDomains).to.exist;
-    expect(bid.meta.advertiserDomains).to.have.lengthOf(1);
-    expect(bid.meta.dsa).to.exist;
-  });
-  it('Verifies match', function () {
-    const request = spec.buildRequests(DEFAULT_PARAMS, DEFAULT_OPTIONS);
-    BID_RESPONSE.body.responses[0].match = true;
-    const response = spec.interpretResponse(BID_RESPONSE, request);
-    const bid = response[0];
-    expect(bid.mediasquare.match).to.exist;
-    expect(bid.mediasquare.match).to.equal(true);
-  });
-  it('Verifies hasConsent', function () {
-    const request = spec.buildRequests(DEFAULT_PARAMS, DEFAULT_OPTIONS);
-    BID_RESPONSE.body.responses[0].hasConsent = true;
-    const response = spec.interpretResponse(BID_RESPONSE, request);
-    const bid = response[0];
-    expect(bid.mediasquare.hasConsent).to.exist;
-    expect(bid.mediasquare.hasConsent).to.equal(true);
-  });
-  it('Verifies bidder code', function () {
-    expect(spec.code).to.equal('mediasquare');
-  });
-
-  it('Verifies bidder aliases', function () {
-    expect(spec.aliases).to.have.lengthOf(1);
-    expect(spec.aliases[0]).to.equal('msq');
-  });
-  it('Verifies if bid request valid', function () {
+  it('Verifies bid request validation', function () {
     expect(spec.isBidRequestValid(DEFAULT_PARAMS[0])).to.equal(true);
+    expect(spec.isBidRequestValid({
+      bidder: BIDDER_CODE,
+      params: { adunit: 'publishername_atf_desktop_rg_pave' }
+    })).to.equal(true);
+    expect(spec.isBidRequestValid({
+      bidder: BIDDER_CODE,
+      params: {}
+    })).to.equal(false);
   });
-  it('Verifies bid won', function () {
+
+  it('Verifies ORTB build request', function () {
     const request = spec.buildRequests(DEFAULT_PARAMS, DEFAULT_OPTIONS);
-    BID_RESPONSE.body.responses[0].match = true;
-    BID_RESPONSE.body.responses[0].hasConsent = true;
-    const response = spec.interpretResponse(BID_RESPONSE, request);
-    const won = spec.onBidWon(response[0]);
+    expect(request).to.have.property('url').and.to.equal('https://pbs-front.mediasquare.fr/ortb');
+    expect(request).to.have.property('method').and.to.equal('POST');
+    expect(request).to.have.property('data').that.is.an('object');
+    expect(request.data).to.have.property('imp').that.is.an('array').with.lengthOf(1);
+    expect(request.data.imp[0]).to.have.nested.property('ext.bidder.owner', 'test');
+    expect(request.data.imp[0]).to.have.nested.property('ext.bidder.code', 'publishername_atf_desktop_rg_pave');
+  });
+
+  it('Verifies ORTB interpretResponse maps bid.burl to the returned bid object', function () {
+    const request = spec.buildRequests(DEFAULT_PARAMS, DEFAULT_OPTIONS);
+    const serverResponse = {
+      body: {
+        id: 'ortb-response',
+        seatbid: [{
+          bid: [{
+            id: 'bid-1',
+            impid: request.data.imp[0].id,
+            price: 2.34,
+            burl: 'https://example.com/win?price=${AUCTION_PRICE}',
+            adm: '<div>test</div>',
+            w: 300,
+            h: 250,
+            mtype: 1
+          }]
+        }]
+      }
+    };
+
+    const response = spec.interpretResponse(serverResponse, request);
+    expect(response).to.have.lengthOf(1);
+    expect(response[0]).to.have.property('burl', 'https://example.com/win?price=${AUCTION_PRICE}');
+  });
+
+  it('Verifies ORTB interpretResponse handles empty response bodies safely', function () {
+    expect(spec.interpretResponse({ body: undefined }, { data: {} })).to.be.an('array').that.is.empty;
+    expect(spec.interpretResponse({ body: null }, { data: {} })).to.be.an('array').that.is.empty;
+  });
+
+  it('Verifies ORTB user sync extraction and filtering', function () {
+    const syncResponse = {
+      body: {
+        ext: {
+          usersyncs: [
+            { type: 'iframe', url: 'http://www.iframe-sync.com/' },
+            { type: 'image', url: 'http://www.pixel-sync.com/' },
+            { type: 'custom', url: 'http://www.other-sync.com/' },
+            { url: 'http://www.missing-type.com/' },
+            { type: 'image' },
+            null
+          ]
+        }
+      }
+    };
+
+    const pixelSyncs = spec.getUserSyncs({ pixelEnabled: true, iframeEnabled: false }, [syncResponse], DEFAULT_OPTIONS.gdprConsent, DEFAULT_OPTIONS.uspConsent);
+    expect(pixelSyncs).to.deep.equal([{ type: 'image', url: 'http://www.pixel-sync.com/' }]);
+
+    const iframeSyncs = spec.getUserSyncs({ pixelEnabled: false, iframeEnabled: true }, [syncResponse], DEFAULT_OPTIONS.gdprConsent, DEFAULT_OPTIONS.uspConsent);
+    expect(iframeSyncs).to.deep.equal([{ type: 'iframe', url: 'http://www.iframe-sync.com/' }]);
+  });
+
+  it('Verifies ORTB user sync returns empty without usersyncs', function () {
+    expect(spec.getUserSyncs({}, null, DEFAULT_OPTIONS.gdprConsent, DEFAULT_OPTIONS.uspConsent)).to.be.an('array').that.is.empty;
+    expect(spec.getUserSyncs({}, [{}], DEFAULT_OPTIONS.gdprConsent, DEFAULT_OPTIONS.uspConsent)).to.be.an('array').that.is.empty;
+  });
+
+  it('Verifies timeout event sends timeout payload', function () {
+    const initialRequestCount = server.requests.length;
+    const timeoutData = [{
+      bidder: BIDDER_CODE,
+      bidId: 'aaaa1234',
+      auctionId: 'bbbb1234',
+      adUnitCode: 'banner-div',
+      timeout: 3000
+    }];
+
+    const result = spec.onTimeout(timeoutData);
+    expect(result).to.equal(true);
+    expect(server.requests.length).to.equal(initialRequestCount + 1);
+
+    const request = server.requests[server.requests.length - 1];
+    expect(request.url).to.equal('https://pbs-front.mediasquare.fr/timeout');
+
+    const payload = JSON.parse(request.requestBody);
+    expect(payload).to.have.property('event', 'timeout');
+    expect(payload).to.have.property('eventSource', BIDDER_CODE);
+    expect(payload).to.have.property('timeoutCount', 1);
+    expect(payload).to.have.property('timeout', 3000);
+    expect(payload).to.have.property('bidIds').that.deep.equals(['aaaa1234']);
+    expect(payload).to.have.property('adUnitCodes').that.deep.equals(['banner-div']);
+    expect(payload).to.have.property('auctionIds').that.deep.equals(['bbbb1234']);
+    expect(payload).to.have.property('timeoutData').that.deep.equals(timeoutData);
+    expect(payload).to.have.property('page');
+    expect(payload).to.have.property('pbjs', '$prebid.version$');
+  });
+
+  it('Verifies timeout event is ignored for empty timeout array', function () {
+    const initialRequestCount = server.requests.length;
+    const result = spec.onTimeout([]);
+    expect(result).to.equal(undefined);
+    expect(server.requests.length).to.equal(initialRequestCount);
+  });
+
+  it('Verifies ORTB onBidWon fires burl for display bids', function () {
+    const initialRequestCount = server.requests.length;
+    const won = spec.onBidWon({
+      bidId: 'aaaa1234',
+      cpm: 1.23,
+      mediaType: 'banner',
+      burl: 'https://example.com/win?price=${AUCTION_PRICE}'
+    });
+
     expect(won).to.equal(true);
-    expect(server.requests.length).to.equal(1);
-    const message = JSON.parse(server.requests[0].requestBody);
-    expect(message).to.have.property('increment').exist;
-    expect(message).to.have.property('increment').and.to.equal('1');
-    expect(message).to.have.property('ova').and.to.equal('cleared');
+    expect(server.requests.length).to.equal(initialRequestCount + 1);
+    expect(server.requests[server.requests.length - 1].url).to.equal('https://example.com/win?price=${AUCTION_PRICE}');
   });
-  it('Verifies user sync without cookie in bid response', function () {
-    var syncs = spec.getUserSyncs({}, [BID_RESPONSE], DEFAULT_OPTIONS.gdprConsent, DEFAULT_OPTIONS.uspConsent);
-    expect(syncs).to.have.lengthOf(0);
-  });
-  it('Verifies user sync with cookies in bid response', function () {
-    BID_RESPONSE.body.cookies = [{ 'type': 'image', 'url': 'http://www.cookie.sync.org/' }];
-    var syncs = spec.getUserSyncs({}, [BID_RESPONSE], DEFAULT_OPTIONS.gdprConsent);
-    expect(syncs).to.have.lengthOf(1);
-    expect(syncs[0]).to.have.property('type').and.to.equal('image');
-    expect(syncs[0]).to.have.property('url').and.to.equal('http://www.cookie.sync.org/');
-  });
-  it('Verifies user sync with no bid response', function() {
-    var syncs = spec.getUserSyncs({}, null, DEFAULT_OPTIONS.gdprConsent, DEFAULT_OPTIONS.uspConsent);
-    expect(syncs).to.have.lengthOf(0);
-  });
-  it('Verifies user sync with no bid body response', function() {
-    let syncs = spec.getUserSyncs({}, [], DEFAULT_OPTIONS.gdprConsent, DEFAULT_OPTIONS.uspConsent);
-    expect(syncs).to.have.lengthOf(0);
-    syncs = spec.getUserSyncs({}, [{}], DEFAULT_OPTIONS.gdprConsent, DEFAULT_OPTIONS.uspConsent);
-    expect(syncs).to.have.lengthOf(0);
-  });
-  it('Verifies native in bid response', function () {
-    const request = spec.buildRequests(NATIVE_PARAMS, DEFAULT_OPTIONS);
-    BID_RESPONSE.body.responses[0].native = { 'title': 'native title' };
-    const response = spec.interpretResponse(BID_RESPONSE, request);
-    expect(response).to.have.lengthOf(1);
-    const bid = response[0];
-    expect(bid).to.have.property('native');
-    delete BID_RESPONSE.body.responses[0].native;
-  });
-  it('Verifies video in bid response', function () {
-    const request = spec.buildRequests(VIDEO_PARAMS, DEFAULT_OPTIONS);
-    BID_RESPONSE.body.responses[0].video = { 'xml': 'my vast XML', 'url': 'my vast url' };
-    const response = spec.interpretResponse(BID_RESPONSE, request);
-    expect(response).to.have.lengthOf(1);
-    const bid = response[0];
-    expect(bid).to.have.property('vastXml');
-    expect(bid).to.have.property('vastUrl');
-    expect(bid).to.have.property('renderer');
-    delete BID_RESPONSE.body.responses[0].video;
-  });
-  it('Verifies burls in bid response', function () {
-    const request = spec.buildRequests(DEFAULT_PARAMS, DEFAULT_OPTIONS);
-    BID_RESPONSE.body.responses[0].burls = [{ 'url': 'http://myburl.com/track?bid=1.0' }];
-    const response = spec.interpretResponse(BID_RESPONSE, request);
-    expect(response).to.have.lengthOf(1);
-    const bid = response[0];
-    expect(bid.mediasquare).to.have.property('burls');
-    expect(bid.mediasquare.burls).to.have.lengthOf(1);
-    expect(bid.mediasquare.burls[0]).to.have.property('url').and.to.equal('http://myburl.com/track?bid=1.0');
-    delete BID_RESPONSE.body.responses[0].burls;
-  });
-  it('Verifies burls bidwon', function () {
-    const request = spec.buildRequests(DEFAULT_PARAMS, DEFAULT_OPTIONS);
-    BID_RESPONSE.body.responses[0].burls = [{ 'url': 'http://myburl.com/track?bid=1.0' }];
-    const response = spec.interpretResponse(BID_RESPONSE, request);
-    const won = spec.onBidWon(response[0]);
-    expect(won).to.equal(true);
-    expect(server.requests.length).to.equal(1);
-    expect(server.requests[0].url).to.equal('http://myburl.com/track?bid=1.0');
-    delete BID_RESPONSE.body.responses[0].burls;
+
+  it('Verifies ORTB onBidWon skips video bids', function () {
+    const initialRequestCount = server.requests.length;
+    const won = spec.onBidWon({
+      bidId: 'aaaa1234',
+      mediaType: 'video',
+      burl: 'https://example.com/win?price=${AUCTION_PRICE}'
+    });
+
+    expect(won).to.equal(undefined);
+    expect(server.requests.length).to.equal(initialRequestCount);
   });
 });
